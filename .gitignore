@@ -1,2 +1,7 @@
 .venv/
 .env
+
+# local db files and checking file
+
+*.sqlite
+check.py
