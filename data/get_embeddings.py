@@ -158,9 +158,11 @@ def generate_embeddings(conn):
             be.traits_json
         FROM book_enrichment be
         JOIN books b ON be.work_id = b.work_id
-        WHERE be.blurb is not NULL AND
+        WHERE be.blurb IS NOT NULL AND
                be.reading_experience IS NOT NULL
               AND TRIM(be.reading_experience) != ''
+              AND content_embedding IS NULL 
+              AND experience_embedding IS NULL
         ORDER BY be.work_id        
     """)
 
