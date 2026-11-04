@@ -2,6 +2,8 @@
 
 ### Find a book for where you are.
 
+![NextLeaf Homepage](screenshot/homepage.png)
+
 NextLeaf is a multi-modal emotion-aware literary book recommender that helps readers discover books based on how they want to feel, what they want to explore, and the kind of reading experience they're looking for.
 
 Instead of searching only by genre, author, or popularity, readers can describe a mood in natural language, upload an image for inspiration, or combine both.
@@ -50,7 +52,7 @@ It uses python, fastapi in the backend with sqlite as database (with metadata an
 ### 1. Clone the repository
 
 ```bash
-git clone <your-github-repository-url>
+git clone <this-github-repository-url>
 cd NextLeaf
 ```
 
@@ -158,6 +160,12 @@ Images are limited to 5 MB.
 The catalogue is built from Goodreads metadata and review statistics. Book descriptions, themes, reading-experience traits, and embeddings are generated in a separate enrichment pipeline.
 
 See [data/README.md](data/README.md) for the data preparation workflow.
+
+## Work to be done in the future
+
+- Make the recommendations more personalized by adding a taste vector for each user.
+- Improve book seeding latency by using multithreading and seed more books.
+- Experiment with different embeddings and ranking formulas and methods.
 
 ## 🌱 Project philosophy
 

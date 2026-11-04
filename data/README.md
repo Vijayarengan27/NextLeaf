@@ -1,6 +1,7 @@
 # NextLeaf — Data Seeding and Enrichment
 
-This project uses the [UCSD Goodreads public dataset](https://sites.google.com/eng.ucsd.edu/ucsdbookgraph/home). Since the dataset's terms restrict redistribution, the raw data is not included in this repository. The following steps describe how to reproduce the local data preparation pipeline.
+This project uses the [UCSD Goodreads public dataset](https://sites.google.com/eng.ucsd.edu/ucsdbookgraph/home). Since the dataset's terms restrict redistribution, the raw data is not included in this repository.
+The data is not redistributed or used for any commercial purposes in this project. Citations are added at the end of this document.
 
 This document describes the process used to build the NextLeaf literary book catalogue from Goodreads data.
 
@@ -46,9 +47,8 @@ The data preparation process uses the following source files:
 |---|---|
 | `goodreads_books.json` | Goodreads book metadata |
 | `goodreads_book_authors.json.gz` | Goodreads author metadata |
-| `goodreads_review_stats_test4.sqlite` | Existing review statistics |
+| `goodreads_reviews_dedup.json` | Existing review statistics |
 
-The review-statistics database is an input source and must remain untouched by the catalogue-building process.
 
 ## 3. Initial book selection
 
