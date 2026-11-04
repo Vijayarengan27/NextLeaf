@@ -1,46 +1,216 @@
-
-# Data Ingestion
+# NextLeaf — Data Seeding and Enrichment
 
 This project uses the [UCSD Goodreads public dataset](https://sites.google.com/eng.ucsd.edu/ucsdbookgraph/home). Since the dataset's terms restrict redistribution, the raw data is not included in this repository. The following steps describe how to reproduce the local data preparation pipeline.
 
-## 1. Initial Data Selection
+This document describes the process used to build the NextLeaf literary book catalogue from Goodreads data.
 
-Each book record contains a `book_id` and a `work_id`. A `book_id` identifies a particular edition or translation, while a `work_id` groups editions belonging to the same underlying work.
+The pipeline transforms raw book metadata and review statistics into a structured SQLite catalogue containing book information, emotional themes, reading-experience descriptions, trait profiles, and semantic embeddings.
 
-We first build a `book_id` → `work_id` mapping from the book metadata. We then stream the reviews dataset and aggregate review statistics by `work_id`, including:
+## 1. Pipeline overview
 
-- Total number of reviews.
-- Number of usable reviews, based on a minimum review-text length.
-- Total number of characters across review texts.
+```text
+Goodreads source data
+        |
+        v
+Initial book selection
+        |
+        v
+Selected book catalogue
+        |
+        v
+Metadata and review preparation
+        |
+        v
+Muse Spark enrichment
+        |
+        v
+Blurb + Themes + 14 Traits
+        |
+        v
+Reading-experience descriptions
+        |
+        v
+BGE embedding generation
+        |
+        v
+SQLite recommendation database
+```
 
-These statistics help identify works with sufficient reader feedback for downstream analysis.
+The resulting database is consumed by the NextLeaf FastAPI backend.
 
-Next, we combine the review statistics with book metadata, including descriptions, ratings counts, average ratings, and other available fields. The works are filtered and ranked to select up to 5,000 candidates with rich metadata and sufficient review coverage.
+## 2. Input datasets
 
-To generate the initial selection CSV:
+The data preparation process uses the following source files:
 
-1. Update the input and output paths in `initial_data_selection.py`.
-2. Run:
+| File | Purpose |
+|---|---|
+| `goodreads_books.json` | Goodreads book metadata |
+| `goodreads_book_authors.json.gz` | Goodreads author metadata |
+| `goodreads_review_stats_test4.sqlite` | Existing review statistics |
 
-   ```bash
-   uv sync
-   uv run initial_data_selection.py
-   ```
+The review-statistics database is an input source and must remain untouched by the catalogue-building process.
 
-## 2. Selected Book Metadata and Reviews
+## 3. Initial book selection
 
-The next stage enriches the selected works with additional metadata, including author names, page counts, publication information, genres, and other available fields. It also extracts a representative sample of reviews for each selected work.
+Run the initial selection script, which maps the work id to diffrent book ids and then finds the works with usable review contents.
 
-To generate the enriched dataset:
 
-1. Update the required file paths in `selected_books.py`.
-2. Run:
+Run from the directory containing the script and its input files:
 
-   ```bash
-   uv run selected_books.py
-   ```
+```powershell
+uv run initial_data_selection.py
+```
+Then run the selected_books.py to get the required number of books specified in the "TARGET_WORKS" variable there.
 
-The resulting files are intended for local use by the project's annotation and recommendation pipeline. They may contain review text and metadata derived from the source dataset; **do not commit or redistribute these files unless the dataset's terms explicitly permit your intended use**.
+```powershell
+uv run selected_books.py
+```
+
+This creates a sqlite database of the required work ids and book metadata named goodreads_catalog.
+
+## 4. Catalogue enrichment
+
+The selected books are prepared for insertion into the NextLeaf SQLite database.
+
+The catalogue contains a `books` table with fields including:
+
+- Work ID and representative book ID
+- Title and author information
+- Description
+- Language and publication information
+- Page count and publisher
+- Average rating and rating counts
+- Review statistics
+- Popular shelves
+- Series information
+- Selection score
+
+The database also contains supporting tables for enrichment and review data.
+
+The final catalogue database is:
+
+```text
+goodreads_catalog.sqlite
+```
+
+The application expects it at:
+
+```text
+data/goodreads_catalog.sqlite
+```
+
+## 5. AI-powered book enrichment
+
+Muse Spark is used to generate additional information for each selected book.
+
+The enrichment process produces:
+
+### Book blurb
+
+A concise description that captures the book's central subject matter and literary identity.
+
+### Emotional themes
+
+A collection of themes describing what the book explores.
+
+Examples include:
+
+- Loneliness
+- Identity
+- Grief
+- Memory
+- Love
+- Alienation
+- Belonging
+- Existentialism
+
+### Reading-experience traits
+
+Each book receives a profile across 14 normalized dimensions, with values between 0 and 1.
+
+| Category | Trait | Scale |
+|---|---|---|
+| Feel | Emotional intensity | Restrained → Intense |
+| Feel | Darkness | Light → Bleak |
+| Feel | Hope/cozy | Bleak → Comforting |
+| Feel | Humour | Serious → Humorous |
+| Feel | Tension/suspense | Relaxed → Suspenseful |
+| Drive | Pace | Slow-burn → Propulsive |
+| Drive | Action/violence | Little → Substantial |
+| Drive | Romance/spice | Little → Prominent |
+| Craft | Prose density | Clean → Literary/dense |
+| Craft | Character depth | Simple → Complex |
+| Craft | Plot complexity | Straightforward → Intricate |
+| Craft | World immersion | Minimal → Rich |
+| Mind | Philosophical depth | Little → Deep |
+| Mind | Weirdness/experimental | Conventional → Experimental |
+
+These profiles allow NextLeaf to compare the reader's desired experience against the characteristics of individual books.
+
+## 6. Reading-experience descriptions
+
+In addition to numerical traits, each book receives a natural-language reading-experience description.
+
+This description captures qualities that are difficult to represent through individual numerical dimensions alone.
+
+It is used as a separate semantic retrieval channel.
+
+To get the AI powered enrichemnt, we run the following, using appropriate path variables in the respective files. blurb generation takes time, so it can be sped up in the future by using multiple threads.
+
+```powershell
+uv run text_blurb_generation.py
+uv run get_embeddings.py
+```
+
+## 7. Embedding generation
+
+NextLeaf uses:
+
+```text
+BAAI/bge-small-en-v1.5
+```
+
+Embeddings are generated locally using Sentence Transformers.
+
+The pipeline maintains separate embeddings for:
+
+- `content_embedding`: represents the book's subject matter, themes, and ideas.
+- `experience_embedding`: represents the emotional and stylistic reading experience.
+
+The resulting vectors are stored as float32 BLOBs in SQLite.
+
+The embedding dimension is 384.
+
+The same embedding model and preprocessing conventions must be used for both indexing and query-time retrieval.
+
+The project currently contains embeddings and blurbs for 900 carefully selected works.
+
+## 8. Database schema
+
+### `books`
+
+Stores the book catalogue and Goodreads metadata.
+
+### `book_enrichment`
+
+Stores generated enrichment information:
+
+- `blurb`
+- `themes_json`
+- `traits_json`
+- `reading_experience`
+- `model_name`
+- `prompt_version`
+- `source_hash`
+- `content_embedding`
+- `experience_embedding`
+- Embedding model metadata
+
+### `reviews`
+
+Stores the selected review records associated with books.
+
+
 
 ## Reproducibility
 

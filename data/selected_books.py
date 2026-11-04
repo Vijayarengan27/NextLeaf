@@ -25,7 +25,7 @@ from pathlib import Path
 
 import ijson
 
-DATA_DIR = Path(r"C:\Users\vijay\Downloads")
+DATA_DIR = Path(r"your\data\path")  # <- add your data directory path here
 PROJECT_DIR = Path(__file__).resolve().parent
 
 BOOKS_FILE = DATA_DIR / "goodreads_books.json/goodreads_books.json"
@@ -35,7 +35,7 @@ REVIEW_STATS_DB = PROJECT_DIR / "goodreads_review_stats.sqlite"
 OUTPUT_DB = PROJECT_DIR / "goodreads_catalog.sqlite"
 WORK_DB = PROJECT_DIR / "catalog_build_work.sqlite"
 
-TARGET_WORKS = 5_000
+TARGET_WORKS = 5_000  # <- change the number of works you want here
 MIN_DESCRIPTION_CHARS = 300
 MIN_RATINGS_COUNT = 1_000
 MIN_AVERAGE_RATING = 3.5

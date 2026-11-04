@@ -17,7 +17,7 @@ MODEL = "muse-spark-1.3"
 PROMPT_VERSION = "book-enrichment-v2"
 
 # Start small. Set to None to process all books.
-LIMIT = 250
+LIMIT = 900  # <- change the required number of works you need from the catalog
 MAX_REVIEWS = 12
 MAX_REVIEW_CHARS = 1200
 MAX_DESCRIPTION_CHARS = 8000

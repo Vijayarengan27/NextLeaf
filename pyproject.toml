@@ -3,9 +3,12 @@ name = "nextleaf"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi>=0.162.0",
     "ijson>=3.6.0",
     "numpy>=2.5.4",
     "openai>=3.42.0",
     "python-dotenv>=1.2.4",
+    "python-multipart>=0.0.33",
     "sentence-transformers>=6.2.0",
+    "uvicorn[standard]>=0.54.0",
 ]

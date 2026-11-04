@@ -3,8 +3,8 @@ import sqlite3
 import ijson
 from pathlib import Path
 
-METADATA_PATH = Path(r"C:\Users\vijay\Downloads\goodreads_books.json\goodreads_books.json")
-REVIEWS_PATH = Path(r"C:\Users\vijay\Downloads\goodreads_reviews_dedup.json\goodreads_reviews_dedup.json")
+METADATA_PATH = Path(r"your\metadata\path") # <- add your metadata file path here
+REVIEWS_PATH = Path(r"your\reviewsfile\path\goodreads_reviews_dedup.json\goodreads_reviews_dedup.json")  # <- add your reviews file path here
 DB_PATH = Path("goodreads_review_stats.sqlite")
 
 BATCH_SIZE = 10_000
